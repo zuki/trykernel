@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/include"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/local/bin/arm-none-eabi-gcc",
+            "cStandard": "c99",
+            "intelliSenseMode": "macos-gcc-arm",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
