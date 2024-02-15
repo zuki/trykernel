@@ -27,7 +27,7 @@ add_executable(try-kernel
     kernel/semaphore.c
     kernel/syslib.c
     kernel/systimer.c
-    kernel/task_mange.c
+    kernel/task_manage.c
     kernel/task_queue.c
     kernel/task_sync.c
     kernel/dispatch.S
