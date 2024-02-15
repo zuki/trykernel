@@ -168,4 +168,7 @@
 #define	INTLEVEL_2              (0x80)
 #define	INTLEVEL_3              (0xC0)
 
+#define SYSTICK_SHIFT           (24)
+#define PENDSV_SHIFT            (16)
+
 #endif  /* SYSDEF_H */
