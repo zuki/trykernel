@@ -1,11 +1,11 @@
-﻿/* 
+﻿/*
  *** Try Kernel
  *      スケジューラ
 */
 #include <trykernel.h>
 #include <knldef.h>
 
-TCB *ready_queue[CNF_MAX_TSKPRI];    // タスクのレディキュー
+TCB *ready_queue[CNF_MAX_TSKPRI];    // タスクのレディキュー(優先度ごとに存在)
 TCB *cur_task;                       // 実行中のタスク
 TCB *sche_task;                      // 次に実行するタスク
 

@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  *** Try Kernel
  *      イベントフラグ
 */
@@ -15,6 +15,7 @@ ID tk_cre_flg( const T_CFLG *pk_cflg )
     UINT    intsts;
 
     DI(intsts);     // 割込み禁止
+    // figcb_tblの未使用のエントリを使う
     for(flgid = 0; flgcb_tbl[flgid].state != KS_NONEXIST; flgid++);
 
     if(flgid < CNF_MAX_FLGID) {

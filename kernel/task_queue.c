@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  *** Try Kernel
  *      タスクの待ち行列操作関数
 */
@@ -27,7 +27,7 @@ void tqueue_remove_top(TCB **queue)
 {
     TCB	*top;
 
-    if(*queue == NULL) return;  // キューは空
+    if(*queue == NULL) return;  // キューが空の場合は何もしない
 
     top = *queue;
     *queue = top->next;

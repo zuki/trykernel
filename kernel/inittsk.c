@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  *** Try Kernel
  *      初期タスク
 */
@@ -6,15 +6,15 @@
 #include <knldef.h>
 
 void initsk(INT stacd, void *exinf);                // 初期タスクの実行プログラム
-UW  tskstk_ini[256/sizeof(UW)];                                // 初期タスクのスタック
+UW  tskstk_ini[256/sizeof(UW)];                     // 初期タスクのスタック
 ID  tskid_ini;                                      // 初期タスクのID番号
 
-T_CTSK  ctsk_ini = {
-    .tskatr     = TA_HLNG | TA_RNG0 | TA_USERBUF,   // タスク属性
-    .task       = initsk,                           // タスクの実行関数
-    .itskpri    = 1,                                // タスク優先度
-    .stksz      = sizeof(tskstk_ini),               // スタックサイズ
-    .bufptr     = tskstk_ini,                       // スタックへのポインタ
+T_CTSK  ctsk_ini = {                                // 初期タスクのタスク生成情報
+    .tskatr     = TA_HLNG | TA_RNG0 | TA_USERBUF,   //   タスク属性
+    .task       = initsk,                           //   タスクの実行関数
+    .itskpri    = 1,                                //   タスク優先度
+    .stksz      = sizeof(tskstk_ini),               //   スタックサイズ
+    .bufptr     = tskstk_ini,                       //   スタックへのポインタ
 };
 
 void initsk(INT stacd, void *exinf)

@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  *** Try Kernel
  *      システムタイマ
 */
@@ -13,6 +13,7 @@ void systimer_handler(void)
 {
     TCB     *tcb;
 
+    // タイムアウトしたタスクをすべてwait_queueからread_queueに移してscheduler()を呼び出す
     for( tcb = wait_queue; tcb != NULL; tcb = tcb->next) {
         if(tcb->waitim == TMO_FEVR) {
             continue;

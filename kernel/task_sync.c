@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  *** Try Kernel
  *      タスク付属同期機能
 */
@@ -7,6 +7,7 @@
 #include <knldef.h>
 
 /* タスクの実行遅延 API */
+// カレントタスクに待ち時間を設定して、ready_queueからwait_queueに移す
 ER tk_dly_tsk( RELTIM dlytim )
 {
     UINT    intsts;
@@ -29,7 +30,7 @@ ER tk_dly_tsk( RELTIM dlytim )
     return err;
 }
 
-/* タスク起床待ちAPI */
+/* タスク起床待ち（スリープ）API */
 ER tk_slp_tsk( TMO tmout )
 {
     UINT    intsts;

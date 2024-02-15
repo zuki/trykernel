@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  *** Try Kernel
  *      ディスパッチャ
 */
@@ -10,7 +10,7 @@ dispatch_entry:
     mov		r0, #1
     msr		primask, r0         // 割込み禁止
     ldr		r1, =disp_running
-    str		r0, [r1]
+    str		r0, [r1]            // disp_running = 1
 
     /* ① 実行中の関数の実行コンテキスト情報をスタックに退避 */
     push    {r4-r7}
@@ -22,38 +22,39 @@ dispatch_entry:
 
     /* ② 現在実行中のタスクの確認 */
     ldr     r0, =cur_task
-    ldr     r1, [r0]
+    ldr     r1, [r0]    // r1 = *cur_task
     cmp     r1, #0
     beq     disp_010    // 実行中のタスク無し(cur_task == NULL) ならば disp_010へ
 
     /* ③ 実行コンテキスト情報へのポインタを実行中のタスクのTCBに格納 */
     mov     r2, sp
-    str     r2, [r1]
+    str     r2, [r1]    // cur_task.tcb.context = sp
 
 disp_010:
     /* ④ 次に実行するタスクの確認 */
     ldr     r1, =sche_task
-    ldr     r2, [r1]
+    ldr     r2, [r1]    // r2 = *sche_task
     cmp     r2, #0
-    bne     disp_030
+    bne     disp_030    // sche_taskあり -> disp_030へ
 
     /* ⑤ 次に実行するタスクが無かった場合の処理 */
-    str     r2, [r0]
+    str     r2, [r0]    // *cur_task = 0
 disp_020:
+    /* 割り込みを許可して次二実行するタスクが現れるのを待つ */
     mov		r3, #0
     msr		primask, r3     // 割込み許可
     mov		r3, #1
     msr		primask, r3     // 割込み禁止
 
-    ldr     r2, [r1]
+    ldr     r2, [r1]        // r2 = sche_task
     cmp     r2, #0
     beq     disp_020
 
     /* ⑥ 実行するタスクの切り替え */
 disp_030:
-    str     r2, [r0]
-    ldr     r0, [r2]
-    mov     sp, r0
+    str     r2, [r0]        // cur_task = sche_task
+    ldr     r0, [r2]        // r0 = sche_task
+    mov     sp, r0          // sp = sche_task.tcb.context
 
     /* ⑦ スタック上のコンテキス情報の復元 */
     pop     {r0-r3}
@@ -66,7 +67,7 @@ disp_030:
     /* 割込み許可 */
     ldr     r0, =disp_running
     mov     r1, #0
-    str     r1, [r0]
+    str     r1, [r0]        // disp_running = 0
     msr     primask, r1     // 割込み許可
 
     bx	lr
