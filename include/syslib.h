@@ -1,6 +1,6 @@
 ﻿#ifndef SYSLIB_H
 #define SYSLIB_H
-/* 
+/*
  *** Try Kernel
  *      共通ライブラリ関数定義
  */
@@ -31,7 +31,7 @@ static inline void set_w(UW adr, UW data)
     *(_UW*)(adr + OP_SET) = data;
 }
 
-/* 32bitレジスタへの出力(ビット排他的論理和) */
+/* 32bitレジスタへの出力(ビット反転) */
 #define OP_XOR      0x1000
 static inline void xset_w(UW adr, UW data)
 {
