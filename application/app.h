@@ -1,35 +1,22 @@
 ﻿extern ID  dd_i2c0, dd_i2c1;   // I2Cデバイスディスクリプタ
-extern ID  dd_adc;             // A/DCデバイスディスクリプタ
+extern ID  dd_spi0, dd_spi1;   // SPIデバイスディスクリプタ
 extern ID  flgid_1;            // イベントフラグID
 
 /* センサーデータ */
-extern UW  gsns_data;          // ジェスチャセンサーのデータ
-extern UW  lsns_data;          // 光センサーのデータ
+extern W  pres_data;          // 気圧データ
+extern W  temp_data;          // 気温データ
+extern W  humi_data;          // 湿度データ
 
 /* イベントフラグのフラグ定義 */
-#define FLG_GSNS    (1<<0)      // ジェスチャセンサーのデータ更新
-#define FLG_LSNS    (1<<1)      // 光センサーのデータ更新
-#define FLG_ALL     (FLG_GSNS|FLG_LSNS)
+#define FLG_PRES    (1<<0)      // 気圧データ更新
+#define FLG_TEMP    (1<<1)      // 気温データ更新
+#define FLG_HUMI    (1<<2)      // 湿度データ更新
+#define FLG_ALL     (FLG_PRES|FLG_TEMP|FLG_HUMI)
 
-/* ジェスチャーセンサーのデータ定義*/
-#define GSNS_RIGHT      (1<<0)
-#define GSNS_LEFT       (1<<1)
-#define GSNS_UP	        (1<<2)
-#define GSNS_DOWN       (1<<3)
-#define GSNS_FORWARD    (1<<4)
-#define GSNS_BACKWARD   (1<<5)
+/* OLED制御タスクIDおよび生成情報 */
+extern ID  tskid_oled;
+extern T_CTSK  ctsk_oled;
 
-/* 光センサー 明暗の境界値 */
-#define LSNS_THRESHOLD  1000
-
-/* ジェスチャーセンサー制御タスクIDおよび生成情報 */
-extern ID  tskid_gsns;
-extern T_CTSK  ctsk_gsns;
-
-/* 光センサー制御タスクIDおよび生成情報 */
-extern ID  tskid_lsns;
-extern T_CTSK  ctsk_lsns;
-
-/* LCD制御タスクIDおよび生成情報 */
-extern ID  tskid_lcd;
-extern T_CTSK  ctsk_lcd;
+/* BME280制御タスクIDおよび生成情報 */
+extern ID  tskid_bme;
+extern T_CTSK  ctsk_bme;

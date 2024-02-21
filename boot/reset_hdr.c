@@ -19,6 +19,8 @@ extern const void *__bss_end;
 
 #define XOSC_STARTUP_DELAY	((XOSC_KHz + 128) / 256)
 
+//static UW configured_freq[CLK_COUNT];
+
 // 実例:_pll(PLL_SYS_BASE, 1, 1500 * MHz, 6, 2);    // PLL SYS 125MHz
 /* PLLの初期化 */
 static void init_pll(UW pll, UINT refdiv, UINT vco_freq, UINT post_div1, UINT post_div2)
@@ -60,9 +62,16 @@ static void clock_config(UINT clock_kind, UW auxsrc, UW src_freq, UW freq)
     clr_w(clock+CLK_x_CTRL, CLK_CTRL_ENABLE);   // クロックを無効にする
 
     out_w(clock+CLK_x_CTRL, (in_w(clock+CLK_x_CTRL) & ~CLK_SYS_CTRL_AUXSRC) | (auxsrc << 5));   // auxソース[7:5]を設定する
-    set_w(clock+CLK_x_CTRL, CLK_CTRL_ENABLE);   // クロックを勇往にする
+    set_w(clock+CLK_x_CTRL, CLK_CTRL_ENABLE);   // クロックを有効にする
     out_w(clock+CLK_x_DIV, div);                // divを設定する
+    //configured_freq[clock_kind] = (UW)(((UD) src_freq << 8) / div);
 }
+
+/*
+UW clock_get_hz(UINT clock_kind) {
+    return configured_freq[clock_kind];
+}
+*/
 
 /* クロックの初期化 */
 static void init_clock(void)

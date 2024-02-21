@@ -49,6 +49,10 @@
 #define CLK_KIND_ADC            8
 #define CLK_KIND_RTC            9
 
+//#define CLK_COUNT               10
+
+// UW clock_get_hz(UINT clock_kind);
+
 /* Reset Controler */
 #define RESETS_BASE             0x4000C000
 #define RESETS_RESET            (RESETS_BASE+0x0)
@@ -58,27 +62,32 @@
 #define RESETS_RESET_ADC        (0x00000001)
 #define RESETS_RESET_I2C0       (0x00000008)
 #define RESETS_RESET_I2C1       (0x00000010)
+#define RESETS_RESET_SPI0       (0x00010000)
+#define RESETS_RESET_SPI1       (0x00020000)
 
-/* GPIO */
+/* 2.19.6.1 GPIO */
 #define IO_BANK0_BASE           0x40014000
 #define	GPIO_CTRL(n)            (IO_BANK0_BASE+0x04+(n*8))
 
+#define	GPIO_CTRL_FUNCSEL_SPI   1
 #define	GPIO_CTRL_FUNCSEL_I2C   3
+#define	GPIO_CTRL_FUNCSEL_SIO   5
 #define	GPIO_CTRL_FUNCSEL_NULL  31
 
+// 2.19.6.3 Pad Control - User Bank
 #define PADS_BANK0_BASE         0x4001c000
 #define	GPIO(n)                 (PADS_BANK0_BASE+0x4+(n*4))
 
-#define	GPIO_OD                 (1<<7)
-#define	GPIO_IE                 (1<<6)
-#define	GPIO_DRIVE_2MA          (0<<4)
-#define	GPIO_DRIVE_4MA          (1<<4)
-#define	GPIO_DRIVE_8MA          (2<<4)
-#define	GPIO_DRIVE_12MA         (3<<4)
-#define	GPIO_PUE                (1<<3)
-#define	GPIO_PDE                (1<<2)
-#define	GPIO_SHEMITT            (1<<1)
-#define	GPIO_SLEWDAST           (1<<0)
+#define	GPIO_OD                 (1<<7)  // Output Disable
+#define	GPIO_IE                 (1<<6)  // nput enable
+#define	GPIO_DRIVE_2MA          (0<<4)  // Drive strength: 2mA
+#define	GPIO_DRIVE_4MA          (1<<4)  // Drive strength: 4mA
+#define	GPIO_DRIVE_8MA          (2<<4)  // Drive strength: 8mA
+#define	GPIO_DRIVE_12MA         (3<<4)  // Drive strength: 12mA
+#define	GPIO_PUE                (1<<3)  // Pull up enable
+#define	GPIO_PDE                (1<<2)  // Pull down enable
+#define	GPIO_SHEMITT            (1<<1)  // Enable schmitt trigger
+#define	GPIO_SLEWDAST           (1<<0)  // Slew rate control. 1 = Fast, 0 = Slow
 
 /* Crystal Oscillator(XOSC) */
 #define XOSC_BASE               0x40024000
@@ -126,14 +135,14 @@
 
 /* IOPORT レジスタ */
 #define SIO_BASE                0xD0000000
-#define	GPIO_IN                 (SIO_BASE+0x04)
-#define GPIO_OUT                (SIO_BASE+0x10)
-#define GPIO_OUT_SET            (SIO_BASE+0x14)
-#define GPIO_OUT_CLR            (SIO_BASE+0x18)
-#define GPIO_OUT_XOR            (SIO_BASE+0x1C)
-#define GPIO_OE_SET             (SIO_BASE+0x24)
-#define GPIO_OE_CLR             (SIO_BASE+0x28)
-#define GPIO_OE_XOR             (SIO_BASE+0x2C)
+#define	GPIO_IN                 (SIO_BASE+0x04)     // Input value for GPIO pins
+#define GPIO_OUT                (SIO_BASE+0x10)     // GPIO output value
+#define GPIO_OUT_SET            (SIO_BASE+0x14)     // GPIO output value set
+#define GPIO_OUT_CLR            (SIO_BASE+0x18)     // GPIO output value clear
+#define GPIO_OUT_XOR            (SIO_BASE+0x1C)     // GPIO output value XOR
+#define GPIO_OE_SET             (SIO_BASE+0x24)     // GPIO output enable set
+#define GPIO_OE_CLR             (SIO_BASE+0x28)     // GPIO output enable clear
+#define GPIO_OE_XOR             (SIO_BASE+0x2C)     // GPIO output enable XOR
 
 /* SysTick レジスタ */
 #define SYST_CSR                (0xE000E010)

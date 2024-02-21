@@ -16,7 +16,7 @@ typedef struct
     ER      (*fn_swri)();           // ライト関数
 } T_DEV_DEF;
 
-#define DEV_NUM     3               /* 登録デバイス数*/
+#define DEV_NUM     2               /* 登録デバイス数*/
 extern T_DEV_DEF   dev_tbl[];       /* デバイ登録で―ブル*/
 
 #endif	/* DEVICE_H */
