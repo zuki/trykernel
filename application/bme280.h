@@ -7,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  **/
 
-#include <stdio.h>
-
 // デバイスバスアドレス
 #define BME280_ADDR     (0x76)
 
