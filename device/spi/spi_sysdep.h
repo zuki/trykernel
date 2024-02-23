@@ -78,41 +78,41 @@ typedef enum {
 #define SPI_CR0_FRF      (3 < 4)     // Frame format
 #define SPI_CR0_DSS      (0xf)       // Data Size
 
-#define SPI_CR1_SOD      (1 < 3)     // Slave-mode output disable
-#define SPI_CR1_MS       (1 < 2)     // Master or slave mode select
-#define SPI_CR1_SSE      (1 < 1)     // Synchronous serial port enable
-#define SPI_CR1_LBM      (1 < 0)     // Loop back mode
+#define SPI_CR1_SOD      (1 << 3)     // Slave-mode output disable
+#define SPI_CR1_MS       (1 << 2)     // Master or slave mode select
+#define SPI_CR1_SSE      (1 << 1)     // Synchronous serial port enable
+#define SPI_CR1_LBM      (1 << 0)     // Loop back mode
 
 #define SPI_DR_DATA      (0xffff)    // Transmit/Receive FIFO
 
-#define SPI_SR_BSY       (1 < 4)     // PrimeCell SSP busy flag
-#define SPI_SR_RFF       (1 < 3)     // Receive FIFO full
-#define SPI_SR_RNE       (1 < 2)     // Receive FIFO not empty
-#define SPI_SR_TNF       (1 < 1)     // Transmit FIFO not full
-#define SPI_SR_TFE       (1 < 0)     // Transmit FIFO empty
+#define SPI_SR_BSY       (1 << 4)     // PrimeCell SSP busy flag
+#define SPI_SR_RFF       (1 << 3)     // Receive FIFO full
+#define SPI_SR_RNE       (1 << 2)     // Receive FIFO not empty
+#define SPI_SR_TNF       (1 << 1)     // Transmit FIFO not full
+#define SPI_SR_TFE       (1 << 0)     // Transmit FIFO empty
 
 #define SPI_CPSR_CPSDVSR (0xff)      // Clock prescale divisor
 
-#define SPI_IMSC_TXIM    (1 < 3)     // Transmit FIFO interrupt mask
-#define SPI_IMSC_RXIM    (1 < 2)     // Receive FIFO interrupt mask
-#define SPI_IMSC_RTIM    (1 < 1)     // Receive timeout interrupt mask
-#define SPI_IMSC_RORIM   (1 < 0)     // Receive overrun interrupt mask
+#define SPI_IMSC_TXIM    (1 << 3)     // Transmit FIFO interrupt mask
+#define SPI_IMSC_RXIM    (1 << 2)     // Receive FIFO interrupt mask
+#define SPI_IMSC_RTIM    (1 << 1)     // Receive timeout interrupt mask
+#define SPI_IMSC_RORIM   (1 << 0)     // Receive overrun interrupt mask
 
-#define SPI_RIS_TXRIS    (1 < 3)     // raw interrupt state of TXINTR
-#define SPI_RIS_RXRIS    (1 < 2)     // raw interrupt state of RXINTR
-#define SPI_RIS_RTRIS    (1 < 1)     // raw interrupt state of RTINTR
-#define SPI_RIS_RORRIS   (1 < 0)     // raw interrupt state of RORINTR
+#define SPI_RIS_TXRIS    (1 << 3)     // raw interrupt state of TXINTR
+#define SPI_RIS_RXRIS    (1 << 2)     // raw interrupt state of RXINTR
+#define SPI_RIS_RTRIS    (1 << 1)     // raw interrupt state of RTINTR
+#define SPI_RIS_RORRIS   (1 << 0)     // raw interrupt state of RORINTR
 
-#define SPI_MIS_TXMIS    (1 < 3)     // masked interrupt state of TXINTR
-#define SPI_MIS_RXMIS    (1 < 2)     // masked interrupt state of RXINTR
-#define SPI_MIS_RTMIS    (1 < 1)     // masked interrupt state of RTINTR
-#define SPI_MIS_RORMIS   (1 < 0)     // masked interrupt state of RORINTR
+#define SPI_MIS_TXMIS    (1 << 3)     // masked interrupt state of TXINTR
+#define SPI_MIS_RXMIS    (1 << 2)     // masked interrupt state of RXINTR
+#define SPI_MIS_RTMIS    (1 << 1)     // masked interrupt state of RTINTR
+#define SPI_MIS_RORMIS   (1 << 0)     // masked interrupt state of RORINTR
 
-#define SPI_ICR_RTIC     (1 < 1)     // Clears the RTINTR interrupt
-#define SPI_ICR_RORIC    (1 <  0)    // Clears the RORINTR interrupt
+#define SPI_ICR_RTIC     (1 << 1)     // Clears the RTINTR interrupt
+#define SPI_ICR_RORIC    (1 << 0)    // Clears the RORINTR interrupt
 
-#define SPI_DMACR_TXDMAE (1 < 1)     // Transmit DMA Enable
-#define SPI_DMACR_RXDMAE (1 < 0)     // Receive DMA Enable
+#define SPI_DMACR_TXDMAE (1 << 1)     // Transmit DMA Enable
+#define SPI_DMACR_RXDMAE (1 << 0)     // Receive DMA Enable
 
 
 /*----------------------------------------------------------------------
