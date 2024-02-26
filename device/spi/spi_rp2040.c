@@ -21,6 +21,19 @@ static T_SPI_LLDCB	ll_devcb[DEV_SPI_UNITNM];
 #define	SPI_STS_RECV        0x0005
 #define	SPI_STS_TOP	        0x8000
 
+// watch point
+UW cr1;
+
+/*
+static void spi_set_baudrate(UW unit) {
+
+    clr_w(SPI_CR1(unit), SPI_CR1_SSE);
+    out_w(SPI_CPSR(unit), 2);
+    set_w(SPI_CR0(unit), (6 << 8));
+    set_w(SPI_CR1(unit), SPI_CR1_SSE);
+}
+*/
+
 static void spi_set_baudrate(UW unit, UW baudrate) {
     // clk_periの周波数を取得
     //UW freq_in = clock_get_hz(CLK_KIND_PERI);
@@ -28,7 +41,8 @@ static void spi_set_baudrate(UW unit, UW baudrate) {
     UW prescale, postdiv;
 
     // SPIを無効に
-    UW enable_mask = in_w(SPI_CR1(unit)) & SPI_CR1_SSE;
+    cr1 = in_w(SPI_CR1(unit));
+    //UW enable_mask = in_w(SPI_CR1(unit)) & SPI_CR1_SSE;
     clr_w(SPI_CR1(unit), SPI_CR1_SSE);
 
     // 出力周波数がポストディバイドの範囲に入る最小の
@@ -44,27 +58,29 @@ static void spi_set_baudrate(UW unit, UW baudrate) {
         if (freq_in / (prescale * (postdiv - 1)) > baudrate)
             break;
     }
+    // baudrate = 10MHzの場合: prescale = 2, postdiv = 7
     out_w(SPI_CPSR(unit), prescale);
     set_w(SPI_CR0(unit), (((postdiv - 1) & 0xff) << 8));
 
     // SPIを有効にする
-    set_w(SPI_CR1(unit), enable_mask);
-
+    set_w(SPI_CR1(unit), SPI_CR1_SSE);
+    cr1 = in_w(SPI_CR1(unit));
     // 設定した周波数を返す
     //return freq_in / (prescale * postdiv);
 }
 
 void spi_set_format(UW unit, UINT data_bits, spi_cpol_t cpol, spi_cpha_t cpha, spi_order_t corder) {
     // SPIを無効に
-    UW enable_mask = in_w(SPI_CR1(unit)) & SPI_CR1_SSE;
+    //UW enable_mask = in_w(SPI_CR1(unit)) & SPI_CR1_SSE;
     clr_w(SPI_CR1(unit), SPI_CR1_SSE);
-
-    set_w(SPI_CR0(unit), ((UW)(data_bits - 1)) << SPI_CR0_DSS |
-                    ((UW)cpol) << SPI_CR0_SPO |
-                    ((UW)cpha) << SPI_CR0_SPH);
+    cr1 = in_w(SPI_CR1(unit));
+    set_w(SPI_CR0(unit), ((UW)(data_bits - 1)) |
+                    ((UW)cpol) << 6 |
+                    ((UW)cpha) << 7);
 
     // SPIを最有効化
-    set_w(SPI_CR1(unit), enable_mask);
+    set_w(SPI_CR1(unit), SPI_CR1_SSE);
+    cr1 = in_w(SPI_CR1(unit));
 }
 
 /*----------------------------------------------------------------------
@@ -73,37 +89,41 @@ void spi_set_format(UW unit, UINT data_bits, spi_cpol_t cpol, spi_cpha_t cpha, s
 static void spi_init(UW unit) {
     switch(unit) {
     case 0:
+        // SPIのリセット
         set_w(RESETS_RESET, RESETS_RESET_SPI0);
         clr_w(RESETS_RESET, RESETS_RESET_SPI0);
-        while((in_w(RESETS_RESET_DONE)&(RESETS_RESET_SPI0))==0);
+        while (!(in_w(RESETS_RESET_DONE) & RESETS_RESET_SPI0));
 
-        // GPIOピン設定
+        // SPI SCKピンの設定
         out_w(GPIO_CTRL(SPI0_SCK), GPIO_CTRL_FUNCSEL_SPI);
         out_w(GPIO(SPI0_SCK), GPIO_DRIVE_4MA | GPIO_SHEMITT);
+        // SPI TX (MOSI) ピンの設定
         out_w(GPIO_CTRL(SPI0_TX), GPIO_CTRL_FUNCSEL_SPI);
         out_w(GPIO(SPI0_TX), GPIO_DRIVE_4MA | GPIO_SHEMITT);
+        // SPI RX (MISO) ピンの設定
         out_w(GPIO_CTRL(SPI0_RX), GPIO_CTRL_FUNCSEL_SPI);
         out_w(GPIO(SPI0_RX), GPIO_OD | GPIO_IE | GPIO_DRIVE_4MA | GPIO_SHEMITT);
-        out_w(GPIO_CTRL(SPI0_CS), GPIO_CTRL_FUNCSEL_SPI);
-        out_w(GPIO(SPI0_CS), GPIO_DRIVE_4MA | GPIO_SHEMITT);
 
-        // Finally enable the SPI
+        // SPIの有効化
         set_w(SPI_CR1(unit), SPI_CR1_SSE);
+        cr1 = in_w(SPI_CR1(unit));
         break;
     case 1:
+        // SPIのリセット
         set_w(RESETS_RESET, RESETS_RESET_SPI1);
         clr_w(RESETS_RESET, RESETS_RESET_SPI1);
-        while((in_w(RESETS_RESET_DONE)&(RESETS_RESET_SPI1))==0);
-
+        while (!(in_w(RESETS_RESET_DONE) & RESETS_RESET_SPI1));
+        // SPI SCKピンの設定
         out_w(GPIO_CTRL(SPI1_SCK), GPIO_CTRL_FUNCSEL_SPI);
         out_w(GPIO(SPI1_SCK), GPIO_DRIVE_4MA | GPIO_SHEMITT);
+        // SPI TX (MOSI) ピンの設定
         out_w(GPIO_CTRL(SPI1_TX), GPIO_CTRL_FUNCSEL_SPI);
         out_w(GPIO(SPI1_TX), GPIO_DRIVE_4MA | GPIO_SHEMITT);
+        // SPI RX (MISO) ピンの設定
         out_w(GPIO_CTRL(SPI1_RX), GPIO_CTRL_FUNCSEL_SPI);
         out_w(GPIO(SPI1_RX), GPIO_OD | GPIO_IE | GPIO_DRIVE_4MA | GPIO_SHEMITT);
-        out_w(GPIO_CTRL(SPI1_CS), GPIO_CTRL_FUNCSEL_SPI);
-        out_w(GPIO(SPI1_CS), GPIO_DRIVE_4MA | GPIO_SHEMITT);
 
+        // SPIの有効化
         set_w(SPI_CR1(unit), SPI_CR1_SSE);
         break;
     }
@@ -126,17 +146,15 @@ static SZ spi_write_blocking(UW unit, const UB *src, SZ len) {
     // RXがフルの場合、PL022はRXプッシュを禁止し、プッシュオンフルの
     // スティッキーフラグを設定するがシフトは続行する。SSPIMSC_RORIMが
     // 設定されていなければ安全である
-    for (int i = 0; i < len; ++i) {
-        while (!spi_is_writable(unit)) {}
+    for (INT i = 0; i < len; ++i) {
+        while (!spi_is_writable(unit));
         out_w(SPI_DR(unit), (UW)src[i]);
     }
     // RX FIFOをドレインし、シフトが終了するのを待ち、
     // RX FIFOを再度ドレインする。
-    while (spi_is_readable(unit))
-        (void)in_w(SPI_DR(unit));
-    while (SPI_SR(unit) & SPI_SR_BSY) {}
-    while (spi_is_readable(unit))
-        (void)in_w(SPI_DR(unit));
+    while (spi_is_readable(unit)) (void)in_w(SPI_DR(unit));
+    while (SPI_SR(unit) & SPI_SR_BSY);
+    while (spi_is_readable(unit)) (void)in_w(SPI_DR(unit));
 
     // オーバーランフラグはセットしたままにしない
     clr_w(SPI_ICR(unit), SPI_ICR_RORIC);
@@ -147,16 +165,14 @@ static SZ spi_write_blocking(UW unit, const UB *src, SZ len) {
 // srcからSPIに16ビットデータをlen個書き出す。SPIから受信したデータは破棄する
 //   pico-sdkのspi_write16_blocking()を書き換え
 static SZ spi_write16_blocking(UW unit, const UH *src, SZ len) {
-    for (int i = 0; i < len; ++i) {
-        while (!spi_is_writable(unit)) {}
+    for (INT i = 0; i < len; ++i) {
+        while (!spi_is_writable(unit));
         out_w(SPI_DR(unit), (UW)src[i]);
     }
 
-    while (spi_is_readable(unit))
-        (void)in_w(SPI_DR(unit));
-    while (SPI_SR(unit) & SPI_SR_BSY) {}
-    while (spi_is_readable(unit))
-        (void)in_w(SPI_DR(unit));
+    while (spi_is_readable(unit)) (void)in_w(SPI_DR(unit));
+    while (SPI_SR(unit) & SPI_SR_BSY);
+    while (spi_is_readable(unit)) (void)in_w(SPI_DR(unit));
 
     // オーバーランフラグはセットしたままにしない
     clr_w(SPI_ICR(unit), SPI_ICR_RORIC);
@@ -184,6 +200,7 @@ ER dev_spi_open(UW unit, UINT omode) {
         ll_devcb[unit].init = TRUE;
 
         out_w(SPI_CR1(unit), 0);     // SPI(unit): マスターで無効
+        cr1 = in_w(SPI_CR1(unit));
         spi_set_baudrate(unit, 10*1000*1000);   // TODO: freqのパラメタ化
         spi_set_format(unit, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
         // Always enable DREQ signals -- harmless if DMA is not listening

@@ -13,7 +13,7 @@ ID tk_cre_tsk( const T_CTSK *pk_ctsk )
     UINT    intsts;
     ID      tskid;
     INT     i;
-    tm_putstring("start tk_cre_tsk\n");
+    //tm_putstring("start tk_cre_tsk\n");
     /* 引数チェック */
     if((pk_ctsk->tskatr & ~TA_RNG3) != (TA_HLNG|TA_USERBUF)) return E_RSATR;
     if(pk_ctsk->itskpri <= 0 || pk_ctsk->itskpri > CNF_MAX_TSKPRI) return E_PAR;
@@ -41,7 +41,7 @@ ID tk_cre_tsk( const T_CTSK *pk_ctsk )
     }
 
     EI(intsts);      // 割込み許可
-    tm_putstring("end tk_cre_tsk\n");
+    //tm_putstring("end tk_cre_tsk\n");
     return tskid;
 }
 
@@ -51,7 +51,7 @@ ER tk_sta_tsk( ID tskid, INT stacd )
     TCB     *tcb;
     UINT    intsts;
     ER      err = E_OK;
-    tm_putstring("called tk_sta_tsk\n");
+    //tm_putstring("called tk_sta_tsk\n");
     /* 引数（タスクID）チェック */
     if(tskid <= 0 || tskid > CNF_MAX_TSKID) return E_ID;
     DI(intsts);     // 割込み禁止

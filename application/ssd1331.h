@@ -112,12 +112,12 @@ typedef enum {
 } spi_order_t;
 
 struct render_area {
-    UB start_col;
-    UB end_col;
-    UB start_row;
-    UB end_row;
+    INT start_col;
+    INT end_col;
+    INT start_row;
+    INT end_row;
 
-    int buflen;
+    INT buflen;
 };
 
 // 指定のGPIO端子に1/0を出力する
@@ -138,9 +138,49 @@ static inline void gpio_set_output(UW gpio, BOOL out) {
         out_w(GPIO_OE_CLR, mask);
 }
 
+static inline INT get_font_index(UB ch) {
+    if (ch >= 'A' && ch <='Z') {
+        return  ch - 'A' + 1;
+    }
+    else if (ch >= '0' && ch <='9') {
+        return  ch - '0' + 27;
+    }
+    else if (ch == '.') {
+        return 37;
+    }
+    else if (ch == ':') {
+        return 38;
+    }
+    else if (ch == '-') {
+        return 39;
+    }
+    else return  0; // Not got that char so space.
+}
+
 static inline UB to_upper(UB ch) {
     if (ch < 'a' || ch > 'z') return ch;
     return 'A' + ch - 'a';
+}
+
+static inline void strncpy(UB *dst, const UB *src, SZ n)
+{
+  UB *d = dst;
+
+  while (n-- > 0 && (*d++ = *src++));
+}
+
+static inline UB strlen(const UB *str) {
+    UB len = 0;
+    while (*str++) ++len;
+    return len;
+}
+
+static inline void *memset(void *dst, INT c, SZ n) {
+    B *d = dst;
+    while (n-- > 0) {
+        *d++ = c;
+    }
+    return dst;
 }
 
 #define count_of(a) (sizeof(a)/sizeof((a)[0]))

@@ -18,14 +18,15 @@ T_CTSK  ctsk_bme = {
     .bufptr     = tskstk_bme,                       // スタックへのポインタ
 };
 
-/** \brief センサー内レジスタのリード
+/** \brief BME280レジスタのリード
  *
  * \param dd デバイスハンドル
- * \param sadr デバイスアドレス
+ * \param sadr BME280スレーブアドレス
  * \param radr レジスタアドレス
- * \param data 受信バッファ
+ * \param data readバッファ
+ * \return tk_swri_devの返り値
  */
-static ER read_sns_reg(ID dd, UW sadr, UW radr, UB *data) {
+static ER read_bme280_reg(ID dd, UW sadr, UW radr, UB *data) {
     T_I2C_EXEC  exec;
     UB          sbuf;
 
@@ -37,8 +38,15 @@ static ER read_sns_reg(ID dd, UW sadr, UW radr, UB *data) {
     return tk_swri_dev(dd, TDN_I2C_EXEC, &exec, sizeof(exec), NULL);
 }
 
-/* センサー内レジスタへのライト */
-static ER write_sns_reg(ID dd, UW sadr, UW radr, UB data) {
+/** \brief BME280レジスタへのライト
+ *
+ * \param dd デバイスハンドル
+ * \param sadr BME280スレーブアドレス
+ * \param radr レジスタアドレス
+ * \param data 書き込むデータ
+ * \return tk_swri_devの返り値
+ */
+static ER write_bme280_reg(ID dd, UW sadr, UW radr, UB data) {
     UB	sbuf[2];
 
     sbuf[0] = radr;
@@ -50,7 +58,7 @@ static ER write_sns_reg(ID dd, UW sadr, UW radr, UB data) {
 /*
 static void bme280_reset(void) {
     // reset the device with the power-on-reset procedure
-    write_sns_reg(dd_i2c0, BME280_ADDR, REG_RESET, 0xB6);
+    write_bme280_reg(dd_i2c0, BME280_ADDR, REG_RESET, 0xB6);
 }
 */
 
@@ -67,13 +75,13 @@ static W bme280_convert(W temp, struct bme280_calib_param* params) {
     return var1 + var2;
 }
 
-// 原データ（気温）を校正する
+// 原データ（気温）を較正する
 static W bme280_convert_temp(W temp, struct bme280_calib_param* params) {
     W t_fine = bme280_convert(temp, params);
     return (t_fine * 5 + 128) >> 8;
 }
 
-// 原データ（気圧）を校正する
+// 原データ（気圧）を較正する
 static W bme280_convert_pressure(W pressure, W temp, struct bme280_calib_param* params) {
     W t_fine = bme280_convert(temp, params);
 
@@ -104,7 +112,7 @@ static W bme280_convert_pressure(W pressure, W temp, struct bme280_calib_param* 
     return converted;
 }
 
-// 原データ（湿度）を校正する
+// 原データ（湿度）を較正する
 static UW bme280_convert_humidity(W humidity, W temp, struct bme280_calib_param* params) {
     W t_fine = bme280_convert(temp, params);
 
@@ -128,7 +136,7 @@ static ER bme280_read_raw(ID dd, W* temperature, W* pressure, W* humidity) {
     ER err;
     UB buf[8];
 
-    err = read_sns_reg(dd, BME280_ADDR, REG_PRESSURE_MSB, buf);
+    err = read_bme280_reg(dd, BME280_ADDR, REG_PRESSURE_MSB, buf);
     if (err < E_OK) return err;
 
     // 読み取った20/16ビットの値を変換用に32ビットの符号付き整数に格納する
@@ -146,7 +154,7 @@ static ER bme280_get_calib_params(ID dd, struct bme280_calib_param* params) {
     UB buf2[NUM_CALIB_PARAMS2] = {0};
 
     // read 0x88 - 0xa1
-    err = read_sns_reg(dd, BME280_ADDR, REG_DIG_T1_LSB, buf);
+    err = read_bme280_reg(dd, BME280_ADDR, REG_DIG_T1_LSB, buf);
     if (err < E_OK) return err;
 
     // store these in a struct for later use
@@ -167,7 +175,7 @@ static ER bme280_get_calib_params(ID dd, struct bme280_calib_param* params) {
     params->dig_h1 = (UB)buf[25];
 
     // read 0xe1 - 0xe6
-    err = read_sns_reg(dd, BME280_ADDR, REG_DIG_H2_LSB, buf2);
+    err = read_bme280_reg(dd, BME280_ADDR, REG_DIG_H2_LSB, buf2);
     if (err < E_OK) return err;
 
     params->dig_h2 = (H)(buf2[1] << 8) | (H)buf2[0];
@@ -184,17 +192,17 @@ static ER bme280_init(ID dd, struct bme280_calib_param *params) {
 
     // 500ms sampling time, x16 filter = 0x90
     UB reg_config_val = ((0x04 << 5) | (0x04 << 2)) & 0xFC;
-    err = write_sns_reg(dd, BME280_ADDR, REG_CONFIG, reg_config_val);
+    err = write_bme280_reg(dd, BME280_ADDR, REG_CONFIG, reg_config_val);
     if (err < E_OK) return err;
 
     // osrs_h x1 = 0x01
     const UB reg_ctrl_hum_val = 0x01;
-    err = write_sns_reg(dd, BME280_ADDR, REG_CTRL_HUM, reg_ctrl_hum_val);
+    err = write_bme280_reg(dd, BME280_ADDR, REG_CTRL_HUM, reg_ctrl_hum_val);
     if (err < E_OK) return err;
 
     // osrs_t x1, osrs_p x1, normal mode operation = 0x27
     UB reg_ctrl_meas_val = (0x01 << 5) | (0x01 << 2) | (0x03);
-    err = write_sns_reg(dd, BME280_ADDR, REG_CTRL_MEAS, reg_ctrl_meas_val);
+    err = write_bme280_reg(dd, BME280_ADDR, REG_CTRL_MEAS, reg_ctrl_meas_val);
     if (err < E_OK) return err;
 
     // 較正パラメタを取得する
@@ -226,15 +234,6 @@ static W calc_percentage(W value, W base) {
 /* タスクの実行関数*/
 void task_bme(INT stacd, void *exinf)
 {
-    tm_putstring("task_bme started\n");
-    while(1) {
-        pres_data = 100741;
-        temp_data = 2591;
-        humi_data = 30.04;
-        tk_set_flg(flgid_1, FLG_PRES|FLG_TEMP|FLG_HUMI);
-        tk_dly_tsk(5000);
-    }
-/*
     // 生データ、前データ
     W raw_temp, cnv_temp, pre_temp;
     W raw_pres, cnv_pres, pre_pres;
@@ -243,7 +242,7 @@ void task_bme(INT stacd, void *exinf)
     struct bme280_calib_param params;   // 較正パラメタ
 
     err = bme280_init(dd_i2c0, &params);               // 環境センサーBME280の初期化
-    if (err < E_OK) tm_putstring("ERROR BME280 init\n");
+    //if (err < E_OK) tm_putstring("ERROR BME280 init\n");
 
     pres_data = pre_pres = temp_data = pre_temp = humi_data = pre_humi = 0;
     while(1) {
@@ -273,5 +272,4 @@ void task_bme(INT stacd, void *exinf)
         }
         tk_dly_tsk(1000);                       // 1秒間待ち状態に
     }
-*/
 }

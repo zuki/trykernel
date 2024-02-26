@@ -1,7 +1,7 @@
 ﻿/*
  *** Try Kernel
  *      システムライブラリ
-*/
+ */
 #include <trykernel.h>
 #include <knldef.h>
 
@@ -28,7 +28,8 @@ UINT tm_putstring(char* str)
     return cnt;
 }
 
-/* デバッグ用UART出力 */
+/*
+// デバッグ用UART出力
 UINT tm_puterr(ER err)
 {
     const UB *EMES[] = {
@@ -60,9 +61,10 @@ UINT tm_puterr(ER err)
     err *= -1;
     UB *str = EMES[err];
     while(*str) {
-        while((in_w(UART0_BASE+UARTx_FR) & UART_FR_TXFF)!= 0);  /* 送信FIFOの空き待ち */
-        out_w(UART0_BASE+UARTx_DR, *str++);                     /* データ送信 */
+        while((in_w(UART0_BASE+UARTx_FR) & UART_FR_TXFF)!= 0);  // 送信FIFOの空き待ち
+        out_w(UART0_BASE+UARTx_DR, *str++);                     // データ送信
         cnt++;
     }
     return cnt;
 }
+*/

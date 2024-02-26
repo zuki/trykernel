@@ -18,7 +18,7 @@ ID tk_opn_dev( const UB *devnm, UINT omode)
 {
     UINT    intsts;
     INT     i;
-    ER      err;
+    ER      err = E_OK;
 
     /* デバイスドライバの検索*/
     for(i = 0; i < DEV_NUM; i++) {

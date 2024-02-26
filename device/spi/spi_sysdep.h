@@ -5,20 +5,15 @@
 #define    DEV_SPI_0           (0)    /* SPI1 */
 #define    DEV_SPI_1           (1)    /* SPI2 */
 
-
 // SPIのGPIOピン番号
 //  SPI0
 #define SPI0_RX     16
-#define SPI0_CS     17
 #define SPI0_SCK    18
 #define SPI0_TX     19
 // SPI1
 #define SPI1_RX     12
-#define SPI1_CS     13
 #define SPI1_SCK    14
 #define SPI1_TX     15
-
-
 /*
  * SPI CPHA (クロックの位相) 値の列挙型.
  */
@@ -47,11 +42,11 @@ typedef enum {
  * SPI レジスタ
  * --------------------------------------------------------------------*/
 
-/* Base address */
+/* ベースアドレス */
 #define    SPI0_BASE               0x4003c000
 #define    SPI1_BASE               0x40040000
 
-/* Register offset */
+/* レジスタアドレスオフセット */
 #define SPIx_CR0         (0x000)   // Control register 0
 #define SPIx_CR1         (0x004)   // Control register 1
 #define SPIx_DR          (0x008)   // Data register
@@ -71,48 +66,48 @@ typedef enum {
 #define SPIx_PCELLID2    (0xff8)   // PrimeCell identification 2 registers
 #define SPIx_PCELLID3    (0xffc)   // PrimeCell identification 3 registers
 
-/* Register bit definition */
-#define SPI_CR0_SCR      (0xff < 8)  // Serial clock rate.
-#define SPI_CR0_SPH      (1 < 7)     // CLKOUT phase
-#define SPI_CR0_SPO      (1 < 6)     // CLKOUT polarity
-#define SPI_CR0_FRF      (3 < 4)     // Frame format
-#define SPI_CR0_DSS      (0xf)       // Data Size
+/* レジスタビットマスク */
+#define SPI_CR0_SCR      (0x0000ff00)   // Serial clock rate.
+#define SPI_CR0_SPH      (0x00000080)   // CLKOUT phase
+#define SPI_CR0_SPO      (0x00000040)   // CLKOUT polarity
+#define SPI_CR0_FRF      (0x00000030)   // Frame format
+#define SPI_CR0_DSS      (0x0000000f)   // Data Size
 
-#define SPI_CR1_SOD      (1 << 3)     // Slave-mode output disable
-#define SPI_CR1_MS       (1 << 2)     // Master or slave mode select
-#define SPI_CR1_SSE      (1 << 1)     // Synchronous serial port enable
-#define SPI_CR1_LBM      (1 << 0)     // Loop back mode
+#define SPI_CR1_SOD      (0x00000008)   // Slave-mode output disable
+#define SPI_CR1_MS       (0x00000004)   // Master or slave mode select
+#define SPI_CR1_SSE      (0x00000002)   // Synchronous serial port enable
+#define SPI_CR1_LBM      (0x00000001)   // Loop back mode
 
-#define SPI_DR_DATA      (0xffff)    // Transmit/Receive FIFO
+#define SPI_DR_DATA      (0x0000ffff)   // Transmit/Receive FIFO
 
-#define SPI_SR_BSY       (1 << 4)     // PrimeCell SSP busy flag
-#define SPI_SR_RFF       (1 << 3)     // Receive FIFO full
-#define SPI_SR_RNE       (1 << 2)     // Receive FIFO not empty
-#define SPI_SR_TNF       (1 << 1)     // Transmit FIFO not full
-#define SPI_SR_TFE       (1 << 0)     // Transmit FIFO empty
+#define SPI_SR_BSY       (0x00000010)   // PrimeCell SSP busy flag
+#define SPI_SR_RFF       (0x00000008)   // Receive FIFO full
+#define SPI_SR_RNE       (0x00000004)   // Receive FIFO not empty
+#define SPI_SR_TNF       (0x00000002)   // Transmit FIFO not full
+#define SPI_SR_TFE       (0x00000001)   // Transmit FIFO empty
 
-#define SPI_CPSR_CPSDVSR (0xff)      // Clock prescale divisor
+#define SPI_CPSR_CPSDVSR (0x000000ff)   // Clock prescale divisor
 
-#define SPI_IMSC_TXIM    (1 << 3)     // Transmit FIFO interrupt mask
-#define SPI_IMSC_RXIM    (1 << 2)     // Receive FIFO interrupt mask
-#define SPI_IMSC_RTIM    (1 << 1)     // Receive timeout interrupt mask
-#define SPI_IMSC_RORIM   (1 << 0)     // Receive overrun interrupt mask
+#define SPI_IMSC_TXIM    (0x00000008)   // Transmit FIFO interrupt mask
+#define SPI_IMSC_RXIM    (0x00000004)   // Receive FIFO interrupt mask
+#define SPI_IMSC_RTIM    (0x00000002)   // Receive timeout interrupt mask
+#define SPI_IMSC_RORIM   (0x00000001)   // Receive overrun interrupt mask
 
-#define SPI_RIS_TXRIS    (1 << 3)     // raw interrupt state of TXINTR
-#define SPI_RIS_RXRIS    (1 << 2)     // raw interrupt state of RXINTR
-#define SPI_RIS_RTRIS    (1 << 1)     // raw interrupt state of RTINTR
-#define SPI_RIS_RORRIS   (1 << 0)     // raw interrupt state of RORINTR
+#define SPI_RIS_TXRIS    (0x00000008)    // raw interrupt state of TXINTR
+#define SPI_RIS_RXRIS    (0x00000004)    // raw interrupt state of RXINTR
+#define SPI_RIS_RTRIS    (0x00000002)    // raw interrupt state of RTINTR
+#define SPI_RIS_RORRIS   (0x00000001)    // raw interrupt state of RORINTR
 
-#define SPI_MIS_TXMIS    (1 << 3)     // masked interrupt state of TXINTR
-#define SPI_MIS_RXMIS    (1 << 2)     // masked interrupt state of RXINTR
-#define SPI_MIS_RTMIS    (1 << 1)     // masked interrupt state of RTINTR
-#define SPI_MIS_RORMIS   (1 << 0)     // masked interrupt state of RORINTR
+#define SPI_MIS_TXMIS    (0x00000008)    // masked interrupt state of TXINTR
+#define SPI_MIS_RXMIS    (0x00000004)    // masked interrupt state of RXINTR
+#define SPI_MIS_RTMIS    (0x00000002)    // masked interrupt state of RTINTR
+#define SPI_MIS_RORMIS   (0x00000001)    // masked interrupt state of RORINTR
 
-#define SPI_ICR_RTIC     (1 << 1)     // Clears the RTINTR interrupt
-#define SPI_ICR_RORIC    (1 << 0)    // Clears the RORINTR interrupt
+#define SPI_ICR_RTIC     (0x00000002)    // Clears the RTINTR interrupt
+#define SPI_ICR_RORIC    (0x00000001)    // Clears the RORINTR interrupt
 
-#define SPI_DMACR_TXDMAE (1 << 1)     // Transmit DMA Enable
-#define SPI_DMACR_RXDMAE (1 << 0)     // Receive DMA Enable
+#define SPI_DMACR_TXDMAE (0x00000002)    // Transmit DMA Enable
+#define SPI_DMACR_RXDMAE (0x00000001)    // Receive DMA Enable
 
 
 /*----------------------------------------------------------------------
