@@ -21,8 +21,6 @@ static T_SPI_LLDCB	ll_devcb[DEV_SPI_UNITNM];
 #define	SPI_STS_RECV        0x0005
 #define	SPI_STS_TOP	        0x8000
 
-// watch point
-UW cr1;
 
 /*
 static void spi_set_baudrate(UW unit) {
@@ -35,14 +33,12 @@ static void spi_set_baudrate(UW unit) {
 */
 
 static void spi_set_baudrate(UW unit, UW baudrate) {
-    // clk_periの周波数を取得
+    // TODO: clk_periの周波数を取得
     //UW freq_in = clock_get_hz(CLK_KIND_PERI);
     UW freq_in = 125 * 1000 * 1000;     // 125 MHz
     UW prescale, postdiv;
 
     // SPIを無効に
-    cr1 = in_w(SPI_CR1(unit));
-    //UW enable_mask = in_w(SPI_CR1(unit)) & SPI_CR1_SSE;
     clr_w(SPI_CR1(unit), SPI_CR1_SSE);
 
     // 出力周波数がポストディバイドの範囲に入る最小の
@@ -64,23 +60,17 @@ static void spi_set_baudrate(UW unit, UW baudrate) {
 
     // SPIを有効にする
     set_w(SPI_CR1(unit), SPI_CR1_SSE);
-    cr1 = in_w(SPI_CR1(unit));
-    // 設定した周波数を返す
-    //return freq_in / (prescale * postdiv);
 }
 
 void spi_set_format(UW unit, UINT data_bits, spi_cpol_t cpol, spi_cpha_t cpha, spi_order_t corder) {
     // SPIを無効に
-    //UW enable_mask = in_w(SPI_CR1(unit)) & SPI_CR1_SSE;
     clr_w(SPI_CR1(unit), SPI_CR1_SSE);
-    cr1 = in_w(SPI_CR1(unit));
     set_w(SPI_CR0(unit), ((UW)(data_bits - 1)) |
                     ((UW)cpol) << 6 |
                     ((UW)cpha) << 7);
 
     // SPIを最有効化
     set_w(SPI_CR1(unit), SPI_CR1_SSE);
-    cr1 = in_w(SPI_CR1(unit));
 }
 
 /*----------------------------------------------------------------------
@@ -106,7 +96,6 @@ static void spi_init(UW unit) {
 
         // SPIの有効化
         set_w(SPI_CR1(unit), SPI_CR1_SSE);
-        cr1 = in_w(SPI_CR1(unit));
         break;
     case 1:
         // SPIのリセット
@@ -200,7 +189,6 @@ ER dev_spi_open(UW unit, UINT omode) {
         ll_devcb[unit].init = TRUE;
 
         out_w(SPI_CR1(unit), 0);     // SPI(unit): マスターで無効
-        cr1 = in_w(SPI_CR1(unit));
         spi_set_baudrate(unit, 10*1000*1000);   // TODO: freqのパラメタ化
         spi_set_format(unit, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
         // Always enable DREQ signals -- harmless if DMA is not listening

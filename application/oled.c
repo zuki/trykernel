@@ -22,11 +22,6 @@ T_CTSK  ctsk_oled = {
     .bufptr     = tskstk_oled,                      // スタックへのポインタ
 };
 
-static void set_pixel(UH *buf, INT x, INT y, UH color) {
-    INT idx = y * 96 + x;
-    buf[idx] = color;
-}
-
 static void reset(void) {
     gpio_put(SPI_RESN_PIN, 1);
     gpio_put(SPI_CSN_PIN, 1);
@@ -52,7 +47,7 @@ static void send_cmd_list(UB *buf, SZ size) {
         send_cmd(buf[i]);
 }
 
-// TODO: unit番号を得る
+// TODO: spi_set_formatをAPIで実現
 static void send_data(UH *buf, SZ size) {
     spi_set_format(0, 16, SPI_CPOL_0,  SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_put(SPI_CSN_PIN, 0);   // チップセレクト
@@ -133,6 +128,11 @@ static void render(UH *buf, struct render_area *area) {
     send_data(buf, area->buflen);
 }
 
+static void set_pixel(UH *buf, INT x, INT y, UH color) {
+    INT idx = y * 96 + x;
+    buf[idx] = color;
+}
+
 static void write_char(UH *buf, INT x, INT y, UB ch, UH color) {
     if (x > SSD1331_WIDTH - 8 || y > SSD1331_HEIGHT - 8)
         return;
@@ -152,33 +152,16 @@ static void write_char(UH *buf, INT x, INT y, UB ch, UH color) {
     }
 }
 
-static void set_line_area(struct render_area *area, INT y) {
-    area->start_col = 0;
-    area->end_col = SSD1331_WIDTH - 1;
-    area->start_row = y;
-    area->end_row = y + 8 - 1;
-    area->buflen = SSD1331_WIDTH * 8;
-}
-
 // y行のx桁から文字列strを書き込む
-static void write_string(UH *buf, struct render_area *area, INT x, INT y, UB *str, UH color) {
+static void write_string(UH *buf, INT x, INT y, UB *str, UH color) {
     // Cull out any string off the screen
     if (x > SSD1331_WIDTH - 8 || y > SSD1331_HEIGHT - 8)
         return;
 
-    // バッファをクリア
-    memset(buf, 0, sizeof(buf));
-
-    UB *temp_s = str;
-    INT temp_x = x;
-
-    while (*temp_s) {
-        write_char(buf, temp_x, 0, *temp_s++, color);
-        temp_x += 8;
+    while (*str) {
+        write_char(buf, x, y, *str++, color);
+        x += 8;
     }
-
-    set_line_area(area, y);
-    render(buf, area);
 }
 
 /**
@@ -208,35 +191,37 @@ static INT itoa(INT num, UB *buf) {
     if (minus) temp[idx++] = '-';
     temp[idx] = 0;
 
-    for (INT i = 1; i < idx; i++) {
+    for (INT i = 0; i < idx; i++) {
         buf[i] = temp[idx-1-i];
     }
 
     return idx;
 }
 
+void make_value(UB *buf, const UB *H, INT val) {
+    UB tmp[10];
 
+    memset(buf, 0, 12);
+    INT len = itoa(val, tmp);
+    strncpy(buf, H, 3);
+    strncpy(buf+3, tmp, len);
+}
 
 /* タスクの実行関数*/
 void task_oled(INT stacd, void *exinf) {
-    UINT    flgptn;
+    UINT flgptn;
     ER err;
 
-    //UH buf[SSD1331_BUF_LEN];
-    struct render_area line_area;   // 描画領域
-    UH lbuf[SSD1331_WIDTH * 8];      // 1行分のバッファ
+    UH buf[SSD1331_BUF_LEN];        // 表示バッファ
     UB vbuf[12];                    // 測定値用バッファ
-    UB vtmp[10];
-    INT vlen;
     const UB title[] = "ENV DATA";
-    const UB PH[] = "P: 1007.41";
-    const UB TH[] = "T: 25.91";
-    const UB HH[] = "H: 30.04";
+    const UB PH[] = "P: ";
+    const UB TH[] = "T: ";
+    const UB HH[] = "H: ";
 
     err = init_oled();
     if (err == E_OK) tm_putstring("OLED inited\n");
 
-/*
     // 描画領域を初期化
     struct render_area frame_area = {
         start_col: 0,
@@ -250,14 +235,16 @@ void task_oled(INT stacd, void *exinf) {
     for (INT i = 0; i < SSD1331_BUF_LEN; i++) {
         buf[i] = COL_BLACK;
     }
-    render(buf, &frame_area);
-*/
+
     // タイトルを表示
-    //write_string(lbuf, &line_area, 8, 0, title, COL_WHITE);
-    write_string(lbuf, &line_area, 0, 10, PH, COL_WHITE);
-    write_string(lbuf, &line_area, 0, 20, TH, COL_WHITE);
-    write_string(lbuf, &line_area, 0, 30, HH, COL_WHITE);
-    //tm_putstring("wrote string\n");
+    write_string(buf, 8, 0, title, COL_WHITE);
+    make_value(vbuf, PH, 101234);
+    write_string(buf, 0, 10, vbuf, COL_WHITE);
+    make_value(vbuf, TH, -345);
+    write_string(buf, 0, 20, vbuf, COL_WHITE);
+    make_value(vbuf, HH, 3987);
+    write_string(buf, 0, 30, vbuf, COL_WHITE);
+    render(buf, &frame_area);
 
     while(1) {
 
