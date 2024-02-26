@@ -26,7 +26,7 @@ T_CTSK  ctsk_bme = {
  * \param data readバッファ
  * \return tk_swri_devの返り値
  */
-static ER read_bme280_reg(ID dd, UW sadr, UW radr, UB *data) {
+static ER read_bme280_reg(ID dd, UW sadr, UW radr, UB *data, SZ size) {
     T_I2C_EXEC  exec;
     UB          sbuf;
 
@@ -35,7 +35,7 @@ static ER read_bme280_reg(ID dd, UW sadr, UW radr, UB *data) {
     exec.sbuf = &sbuf;  // 送信バッファはレジスタアドレス
     exec.rbuf = data;   // 受信バッファ
 
-    return tk_swri_dev(dd, TDN_I2C_EXEC, &exec, sizeof(exec), NULL);
+    return tk_swri_dev(dd, TDN_I2C_EXEC, &exec, size, NULL);
 }
 
 /** \brief BME280レジスタへのライト
@@ -136,7 +136,7 @@ static ER bme280_read_raw(ID dd, W* temperature, W* pressure, W* humidity) {
     ER err;
     UB buf[8];
 
-    err = read_bme280_reg(dd, BME280_ADDR, REG_PRESSURE_MSB, buf);
+    err = read_bme280_reg(dd, BME280_ADDR, REG_PRESSURE_MSB, buf, 8);
     if (err < E_OK) return err;
 
     // 読み取った20/16ビットの値を変換用に32ビットの符号付き整数に格納する
@@ -154,7 +154,7 @@ static ER bme280_get_calib_params(ID dd, struct bme280_calib_param* params) {
     UB buf2[NUM_CALIB_PARAMS2] = {0};
 
     // read 0x88 - 0xa1
-    err = read_bme280_reg(dd, BME280_ADDR, REG_DIG_T1_LSB, buf);
+    err = read_bme280_reg(dd, BME280_ADDR, REG_DIG_T1_LSB, buf, NUM_CALIB_PARAMS1);
     if (err < E_OK) return err;
 
     // store these in a struct for later use
@@ -175,7 +175,7 @@ static ER bme280_get_calib_params(ID dd, struct bme280_calib_param* params) {
     params->dig_h1 = (UB)buf[25];
 
     // read 0xe1 - 0xe6
-    err = read_bme280_reg(dd, BME280_ADDR, REG_DIG_H2_LSB, buf2);
+    err = read_bme280_reg(dd, BME280_ADDR, REG_DIG_H2_LSB, buf2, NUM_CALIB_PARAMS2);
     if (err < E_OK) return err;
 
     params->dig_h2 = (H)(buf2[1] << 8) | (H)buf2[0];
@@ -238,6 +238,7 @@ void task_bme(INT stacd, void *exinf)
     W raw_temp, cnv_temp, pre_temp;
     W raw_pres, cnv_pres, pre_pres;
     W raw_humi, cnv_humi, pre_humi;
+    UINT tflg;
     ER  err;
     struct bme280_calib_param params;   // 較正パラメタ
 
@@ -245,7 +246,8 @@ void task_bme(INT stacd, void *exinf)
     //if (err < E_OK) tm_putstring("ERROR BME280 init\n");
 
     pres_data = pre_pres = temp_data = pre_temp = humi_data = pre_humi = 0;
-    while(1) {
+    while (1) {
+        tflg = 0;
         // センサーデータの読み取り
         err = bme280_read_raw(dd_i2c0, &raw_temp, &raw_pres, &raw_humi);
         if (err >= E_OK) {
@@ -254,22 +256,23 @@ void task_bme(INT stacd, void *exinf)
             cnv_humi = bme280_convert_humidity(raw_humi, raw_temp, &params);
             if (cnv_pres != pre_pres) {
                 pres_data = calc_percentage(cnv_pres, 100);
-                tk_set_flg(flgid_1, FLG_PRES);   // イベントフラグのセット
+                tflg |=  FLG_PRES;      // イベントフラグのセット
                 pre_temp = cnv_pres;
             }
             if (cnv_temp != pre_temp) {
-                temp_data = calc_percentage(cnv_pres, 100);
-                tk_set_flg(flgid_1, FLG_TEMP);   // イベントフラグのセット
+                temp_data = calc_percentage(cnv_temp, 100);
+                tflg |= FLG_TEMP;       // イベントフラグのセット
                 pre_temp = cnv_temp;
             }
             if (cnv_humi != pre_humi) {
-                humi_data = calc_percentage(cnv_pres, 1024);
-                tk_set_flg(flgid_1, FLG_HUMI);   // イベントフラグのセット
+                humi_data = calc_percentage(cnv_humi, 1024);
+                tflg |= FLG_HUMI;       // イベントフラグのセット
                 pre_humi = cnv_humi;
             }
+            if (tflg) tk_set_flg(flgid_1, tflg);    // いずれかの値が変更されたらフラグセット
         } else {
             tm_putstring("ERROR Read BME280\n");
         }
-        tk_dly_tsk(1000);                       // 1秒間待ち状態に
+        tk_dly_tsk(1000);               // 1行おきに測定
     }
 }

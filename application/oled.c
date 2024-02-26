@@ -238,41 +238,28 @@ void task_oled(INT stacd, void *exinf) {
 
     // タイトルを表示
     write_string(buf, 8, 0, title, COL_WHITE);
-    make_value(vbuf, PH, 101234);
-    write_string(buf, 0, 10, vbuf, COL_WHITE);
-    make_value(vbuf, TH, -345);
-    write_string(buf, 0, 20, vbuf, COL_WHITE);
-    make_value(vbuf, HH, 3987);
-    write_string(buf, 0, 30, vbuf, COL_WHITE);
-    render(buf, &frame_area);
 
     while(1) {
-
-/*
         // 環境センサーのデータ表示
         tk_wai_flg(flgid_1, FLG_ALL, TWF_ORW | TWF_BITCLR, &flgptn, TMO_FEVR);  // フラグのセット待ち
-        if (flgptn & FLG_TEMP) {
-            // 気圧を表示
-            vlen = itoa(pres_data, vtmp);
-            strncpy(vbuf, PH, 3);
-            strncpy(vbuf+3, vtmp, vlen);
-            write_string(lbuf, &line_area, 0, 10, vbuf, COL_WHITE);
+        if (flgptn) {
+            if (flgptn & FLG_PRES) {
+                // 気圧を表示
+                make_value(vbuf, PH, pres_data);
+                write_string(buf, 0, 10, vbuf, COL_WHITE);
+            }
+            if (flgptn & FLG_TEMP) {
+                // 温度を表示
+                make_value(vbuf, TH, temp_data);
+                write_string(buf, 0, 20, vbuf, COL_WHITE);
+            }
+            if (flgptn & FLG_HUMI) {
+                // 湿度を表示
+                make_value(vbuf, HH, humi_data);
+                write_string(buf,  0, 30, vbuf, COL_WHITE);
+            }
+            render(buf, &frame_area);
         }
-        if (flgptn & FLG_TEMP) {
-            // 温度を表示
-            vlen = itoa(temp_data, vtmp);
-            strncpy(vbuf, TH, 3);
-            strncpy(vbuf+3, vtmp, vlen);
-            write_string(lbuf, &line_area, 0, 20, vbuf, COL_WHITE);
-        }
-        if (flgptn & FLG_HUMI) {
-            // 湿度を表示
-            vlen = itoa(humi_data, vtmp);
-            strncpy(vbuf, HH, 3);
-            strncpy(vbuf+3, vtmp, vlen);
-            write_string(lbuf, &line_area, 0, 30, vbuf, COL_WHITE);
-        }
-*/
     }
 
 }

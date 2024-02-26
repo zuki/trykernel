@@ -233,7 +233,7 @@ ER dev_i2c_write(UW unit, UW sadr, UB *buf, SZ size, SZ *asize)
     if(sadr == TDN_I2C_EXEC) {
         p_ex = (T_I2C_EXEC*)buf;
         // 指定レジスタの値を取得: p_ex->rbuf
-        set_com_start( unit, p_ex->sadr, 1, 1, p_ex->sbuf, p_ex->rbuf);
+        set_com_start( unit, p_ex->sadr, 1, size, p_ex->sbuf, p_ex->rbuf);
     } else {
         // デバイスにbufからsizeだけ書き込む: 受信データは破棄
         set_com_start( unit, sadr, size, 0, buf, NULL);
