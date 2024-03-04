@@ -10,7 +10,7 @@
 extern void spi_set_format(UW unit, UINT data_bits, spi_cpol_t cpol, spi_cpha_t cpha, spi_order_t corder);
 
 void task_oled(INT stacd, void *exinf);             // タスクの実行関数
-UW  tskstk_oled[32768/sizeof(UW)];                  // タスクのスタック領域
+UW  tskstk_oled[1024/sizeof(UW)];                   // タスクのスタック領域
 ID  tskid_oled;                                     // タスクID
 
 /* タスク生成情報 */
@@ -82,7 +82,7 @@ static ER init_oled(void) {
     gpio_put(SPI_RESN_PIN, 1);
 
     // ssd1331をリセット
-    reset();
+    //reset();
 
     // デフォルト値で初期化: Adafruit-SSD1331-OLED-Driver-Library-for-Arduinoから引用
     UB cmds[] = {
@@ -113,27 +113,20 @@ static ER init_oled(void) {
     return E_OK;
 }
 
-static void render(UH *buf, struct render_area *area) {
-    // render_areaでディスプレイの一部を更新
+static void write_pixel(INT x, INT y, UH color) {
+    if (x < 0 || x >= SSD1331_WIDTH || y < 0 || y >= SSD1331_HEIGHT)
+        return;
+
     UB cmds[] = {
-        SSD1331_SET_COL_ADDR,
-        area->start_col,
-        area->end_col,
-        SSD1331_SET_ROW_ADDR,
-        area->start_row,
-        area->end_row
+        SSD1331_SET_COL_ADDR, x, x,
+        SSD1331_SET_ROW_ADDR, y, y
     };
 
-    send_cmd_list(cmds, count_of(cmds));
-    send_data(buf, area->buflen);
+    send_cmd_list(cmds, 6);
+    send_data(&color, 1);
 }
 
-static void set_pixel(UH *buf, INT x, INT y, UH color) {
-    INT idx = y * 96 + x;
-    buf[idx] = color;
-}
-
-static void write_char(UH *buf, INT x, INT y, UB ch, UH color) {
+static void write_char(INT x, INT y, UB ch, UH color) {
     if (x > SSD1331_WIDTH - 8 || y > SSD1331_HEIGHT - 8)
         return;
 
@@ -142,26 +135,32 @@ static void write_char(UH *buf, INT x, INT y, UB ch, UH color) {
     ch = to_upper(ch);
     INT idx = get_font_index(ch);    // 文字のfont[]内の行数
     for (INT i = 0; i < 8; i++) {
-        c = font[idx*8+i];
+        c = font[idx * 8 + i];
         p = 0x80;
         for (INT k = 0; k < 8; k++) {
             b = (c & p);
             p >>= 1;
-            set_pixel(buf, x + k, y + i, b ? color : COL_BLACK);
+            write_pixel(x + k, y + i, b ? color : COL_BLACK);
         }
     }
 }
 
 // y行のx桁から文字列strを書き込む
-static void write_string(UH *buf, INT x, INT y, UB *str, UH color) {
+static void write_string(INT x, INT y, const UB *str, UH color) {
     // Cull out any string off the screen
     if (x > SSD1331_WIDTH - 8 || y > SSD1331_HEIGHT - 8)
         return;
 
-    while (*str) {
-        write_char(buf, x, y, *str++, color);
+    for (INT i = 0; i < 12; i++) {
+        write_char(x, y, *(str+i), color);
         x += 8;
     }
+/*
+    while (*str) {
+        write_char(x, y, *str++, color);
+        x += 8;
+    }
+*/
 }
 
 /**
@@ -198,13 +197,27 @@ static INT itoa(INT num, UB *buf) {
     return idx;
 }
 
-void make_value(UB *buf, const UB *H, INT val) {
+static void make_value(UB *buf, const UB *H, INT val) {
     UB tmp[10];
 
-    memset(buf, 0, 12);
+    memset(buf, ' ', 12);
     INT len = itoa(val, tmp);
     strncpy(buf, H, 3);
     strncpy(buf+3, tmp, len);
+}
+
+static void clear_screen(UH color) {
+    UB cmds[] = {
+        SSD1331_SET_COL_ADDR, 0, SSD1331_WIDTH - 1,
+        SSD1331_SET_ROW_ADDR, 0, SSD1331_HEIGHT -1
+    };
+
+    send_cmd_list(cmds, count_of(cmds));
+    for (INT i = 0; i < SSD1331_WIDTH; i++) {
+        for (INT j = 0; j < SSD1331_HEIGHT; j++) {
+            send_data(&color, 1);
+        }
+    }
 }
 
 /* タスクの実行関数*/
@@ -212,53 +225,38 @@ void task_oled(INT stacd, void *exinf) {
     UINT flgptn;
     ER err;
 
-    UH buf[SSD1331_BUF_LEN];        // 表示バッファ
-    UB vbuf[12];                    // 測定値用バッファ
-    const UB title[] = "ENV DATA";
+    UB vbuf[12];                // 測定値用バッファ
     const UB PH[] = "P: ";
     const UB TH[] = "T: ";
     const UB HH[] = "H: ";
 
+    // SSD1331の初期化
     err = init_oled();
-    if (err == E_OK) tm_putstring("OLED inited\n");
-
-    // 描画領域を初期化
-    struct render_area frame_area = {
-        start_col: 0,
-        end_col : SSD1331_WIDTH - 1,
-        start_row : 0,
-        end_row : SSD1331_HEIGHT - 1,
-        buflen : SSD1331_WIDTH * SSD1331_HEIGHT
-    };
-
-    // 画面全体を黒で塗りつぶす
-    for (INT i = 0; i < SSD1331_BUF_LEN; i++) {
-        buf[i] = COL_BLACK;
-    }
+    // 画面の消去
+    clear_screen(COL_BLACK);
 
     // タイトルを表示
-    write_string(buf, 8, 0, title, COL_WHITE);
+    write_string(18, 0, "ENV_DATA", COL_PURPLE);
 
     while(1) {
         // 環境センサーのデータ表示
         tk_wai_flg(flgid_1, FLG_ALL, TWF_ORW | TWF_BITCLR, &flgptn, TMO_FEVR);  // フラグのセット待ち
-        if (flgptn) {
-            if (flgptn & FLG_PRES) {
-                // 気圧を表示
-                make_value(vbuf, PH, pres_data);
-                write_string(buf, 0, 10, vbuf, COL_WHITE);
-            }
-            if (flgptn & FLG_TEMP) {
-                // 温度を表示
-                make_value(vbuf, TH, temp_data);
-                write_string(buf, 0, 20, vbuf, COL_WHITE);
-            }
-            if (flgptn & FLG_HUMI) {
-                // 湿度を表示
-                make_value(vbuf, HH, humi_data);
-                write_string(buf,  0, 30, vbuf, COL_WHITE);
-            }
-            render(buf, &frame_area);
+        if (flgptn & FLG_BME) {
+            // 気圧を表示
+            make_value(vbuf, PH, pres_data);
+            write_string(0, 10, vbuf, COL_RED);
+            //write_string(0, 10, vbuf, pres_data > 101000 ? COL_RED : COL_GREEN);
+            //tm_putstring(vbuf);tm_putstring("\n");
+            // 温度を表示
+            make_value(vbuf, TH, temp_data);
+            write_string(0, 20, vbuf, COL_GREEN);
+            //write_string(0, 20, vbuf, temp_data > 3000 ? COL_RED : COL_GREEN);
+            //tm_putstring(vbuf);tm_putstring("\n");
+            // 湿度を表示
+            make_value(vbuf, HH, humi_data);
+            write_string(0, 30, vbuf, COL_BLUE);
+            //write_string(0, 30, vbuf, humi_data < 40000 ? COL_RED : COL_GREEN);
+            //tm_putstring(vbuf);tm_putstring("\n");
         }
     }
 

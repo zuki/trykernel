@@ -8,10 +8,10 @@ extern W  temp_data;          // 気温データ
 extern W  humi_data;          // 湿度データ
 
 /* イベントフラグのフラグ定義 */
-#define FLG_PRES    (1<<0)      // 気圧データ更新
-#define FLG_TEMP    (1<<1)      // 気温データ更新
-#define FLG_HUMI    (1<<2)      // 湿度データ更新
-#define FLG_ALL     (FLG_PRES|FLG_TEMP|FLG_HUMI)
+#define FLG_GSNS    (1<<0)      // ジェスチャセンサーのデータ更新
+#define FLG_LSNS    (1<<1)      // 光センサーのデータ更新
+#define FLG_BME     (1<<2)
+#define FLG_ALL     (FLG_GSNS|FLG_LSNS|FLG_BME)
 
 /* OLED制御タスクIDおよび生成情報 */
 extern ID  tskid_oled;

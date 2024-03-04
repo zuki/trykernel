@@ -256,23 +256,23 @@ void task_bme(INT stacd, void *exinf)
             cnv_humi = bme280_convert_humidity(raw_humi, raw_temp, &params);
             if (cnv_pres != pre_pres) {
                 pres_data = calc_percentage(cnv_pres, 100);
-                tflg |=  FLG_PRES;      // イベントフラグのセット
+                tflg += 1;      // イベントフラグのセット
                 pre_temp = cnv_pres;
             }
             if (cnv_temp != pre_temp) {
                 temp_data = calc_percentage(cnv_temp, 100);
-                tflg |= FLG_TEMP;       // イベントフラグのセット
+                tflg +=2 ;       // イベントフラグのセット
                 pre_temp = cnv_temp;
             }
             if (cnv_humi != pre_humi) {
                 humi_data = calc_percentage(cnv_humi, 1024);
-                tflg |= FLG_HUMI;       // イベントフラグのセット
+                tflg += 4;       // イベントフラグのセット
                 pre_humi = cnv_humi;
             }
-            if (tflg) tk_set_flg(flgid_1, tflg);    // いずれかの値が変更されたらフラグセット
+            if (tflg) tk_set_flg(flgid_1, FLG_BME);    // いずれかの値が変更されたらフラグセット
         } else {
             tm_putstring("ERROR Read BME280\n");
         }
-        tk_dly_tsk(1000);               // 1行おきに測定
+        tk_dly_tsk(5000);               // 5秒おきに測定
     }
 }

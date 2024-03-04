@@ -123,10 +123,15 @@ struct render_area {
 // 指定のGPIO端子に1/0を出力する
 static inline void gpio_put(UW gpio, BOOL value) {
     UW mask = 1u << gpio;
-    if (value)
+    if (value) {
+        asm volatile("nop \n nop \n nop");
         out_w(GPIO_OUT_SET, mask);
-    else
+        asm volatile("nop \n nop \n nop");
+    }  else {
+        asm volatile("nop \n nop \n nop");
         out_w(GPIO_OUT_CLR, mask);
+        asm volatile("nop \n nop \n nop");
+    }
 }
 
 // 指定のGPIO端子の方向を決める. out = TRUE: output、FALSE: input
