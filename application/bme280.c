@@ -273,6 +273,6 @@ void task_bme(INT stacd, void *exinf)
         } else {
             tm_putstring("ERROR Read BME280\n");
         }
-        tk_dly_tsk(5000);               // 5秒おきに測定
+        tk_dly_tsk(1000);               // 1秒おきに測定
     }
 }

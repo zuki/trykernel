@@ -113,23 +113,23 @@ typedef enum {
 /*----------------------------------------------------------------------
  * SPI レジスタアクセス・マクロ
  *---------------------------------------------------------------------*/
-#define SPI_CR0(u)	        (ba[u] + SPIx_CR0)	//  Control register 0
-#define SPI_CR1(u)	        (ba[u] + SPIx_CR1)	//  Control register 1
-#define SPI_DR(u)	        (ba[u] + SPIx_DR)	//  Data register
-#define SPI_SR(u)	        (ba[u] + SPIx_SR)	//  Status register
-#define SPI_CPSR(u)	        (ba[u] + SPIx_CPSR)	//  Clock prescale register
-#define SPI_IMSC(u)	        (ba[u] + SPIx_IMSC)	//  Interrupt mask set or clear register
-#define SPI_RIS(u)	        (ba[u] + SPIx_RIS)	//  Raw interrupt status register
-#define SPI_MIS(u)	        (ba[u] + SPIx_MIS)	//  Masked interrupt status register
-#define SPI_ICR(u)	        (ba[u] + SPIx_ICR)	//  Interrupt clear register
-#define SPI_DMACR(u)	    (ba[u] + SPIx_DMACR)    //  DMA control register
-#define SPI_PERIPHID0(u)    (ba[u] + SPIx_PERIPHID0)    //  Peripheral identification 0 registers
-#define SPI_PERIPHID1(u)	(ba[u] + SPIx_PERIPHID1)	//  Peripheral identification 1 registers
-#define SPI_PERIPHID2(u)	(ba[u] + SPIx_PERIPHID2)	//  Peripheral identification 2 registers
-#define SPI_PERIPHID3(u)    (ba[u] + SPIx_PERIPHID3)	//  Peripheral identification 3 registers
-#define SPI_PCELLID0(u)	    (ba[u] + SPIx_PCELLID0)	    //  PrimeCell identification 0 registers
-#define SPI_PCELLID1(u)	    (ba[u] + SPIx_PCELLID1)	    //  PrimeCell identification 1 registers
-#define SPI_PCELLID2(u)	    (ba[u] + SPIx_PCELLID2)	    //  PrimeCell identification 2 registers
-#define SPI_PCELLID3(u)	    (ba[u] + SPIx_PCELLID3)	    //  PrimeCell identification 3 registers
+#define SPI_CR0(u)	        (spiba[u] + SPIx_CR0)	//  Control register 0
+#define SPI_CR1(u)	        (spiba[u] + SPIx_CR1)	//  Control register 1
+#define SPI_DR(u)	        (spiba[u] + SPIx_DR)	//  Data register
+#define SPI_SR(u)	        (spiba[u] + SPIx_SR)	//  Status register
+#define SPI_CPSR(u)	        (spiba[u] + SPIx_CPSR)	//  Clock prescale register
+#define SPI_IMSC(u)	        (spiba[u] + SPIx_IMSC)	//  Interrupt mask set or clear register
+#define SPI_RIS(u)	        (spiba[u] + SPIx_RIS)	//  Raw interrupt status register
+#define SPI_MIS(u)	        (spiba[u] + SPIx_MIS)	//  Masked interrupt status register
+#define SPI_ICR(u)	        (spiba[u] + SPIx_ICR)	//  Interrupt clear register
+#define SPI_DMACR(u)	    (spiba[u] + SPIx_DMACR)    //  DMA control register
+#define SPI_PERIPHID0(u)    (spiba[u] + SPIx_PERIPHID0)    //  Peripheral identification 0 registers
+#define SPI_PERIPHID1(u)	(spiba[u] + SPIx_PERIPHID1)	//  Peripheral identification 1 registers
+#define SPI_PERIPHID2(u)	(spiba[u] + SPIx_PERIPHID2)	//  Peripheral identification 2 registers
+#define SPI_PERIPHID3(u)    (spiba[u] + SPIx_PERIPHID3)	//  Peripheral identification 3 registers
+#define SPI_PCELLID0(u)	    (spiba[u] + SPIx_PCELLID0)	    //  PrimeCell identification 0 registers
+#define SPI_PCELLID1(u)	    (spiba[u] + SPIx_PCELLID1)	    //  PrimeCell identification 1 registers
+#define SPI_PCELLID2(u)	    (spiba[u] + SPIx_PCELLID2)	    //  PrimeCell identification 2 registers
+#define SPI_PCELLID3(u)	    (spiba[u] + SPIx_PCELLID3)	    //  PrimeCell identification 3 registers
 
 #endif      /* DEV_SPI_RP2040_H */

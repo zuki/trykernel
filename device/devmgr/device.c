@@ -34,6 +34,8 @@ ID tk_opn_dev( const UB *devnm, UINT omode)
             dev_tbl[i].omode = omode;
             err = i;
         }
+    } else {
+        err = i;
     }
     EI(intsts);                          // 割込み許可
     return err;

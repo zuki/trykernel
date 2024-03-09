@@ -3,7 +3,7 @@
 #include "spi_sysdep.h"
 
 // レジスタのベースアドレス
-const static UW ba[DEV_SPI_UNITNM] = { SPI0_BASE, SPI1_BASE };
+const static UW spiba[DEV_SPI_UNITNM] = { SPI0_BASE, SPI1_BASE };
 
 // デバイス制御データ
 typedef struct {
@@ -20,17 +20,6 @@ static T_SPI_LLDCB	ll_devcb[DEV_SPI_UNITNM];
 #define	SPI_STS_SEND        0x0004
 #define	SPI_STS_RECV        0x0005
 #define	SPI_STS_TOP	        0x8000
-
-
-/*
-static void spi_set_baudrate(UW unit) {
-
-    clr_w(SPI_CR1(unit), SPI_CR1_SSE);
-    out_w(SPI_CPSR(unit), 2);
-    set_w(SPI_CR0(unit), (6 << 8));
-    set_w(SPI_CR1(unit), SPI_CR1_SSE);
-}
-*/
 
 static void spi_set_baudrate(UW unit, UW baudrate) {
     // TODO: clk_periの周波数を取得
@@ -130,7 +119,7 @@ static inline BOOL spi_is_readable(UW unit) {
 
 // srcからSPIに直接lenバイト書き出す。SPIから受診したデータは破棄する
 //   pico-sdkのspi_write_blocking()を書き換え
-static SZ spi_write_blocking(UW unit, const UB *src, SZ len) {
+static void spi_write_blocking(UW unit, const UB *src, SZ len) {
     // TX FIFOに書き込むがRXは無視する。その後クリーンアップする。
     // RXがフルの場合、PL022はRXプッシュを禁止し、プッシュオンフルの
     // スティッキーフラグを設定するがシフトは続行する。SSPIMSC_RORIMが
@@ -147,13 +136,11 @@ static SZ spi_write_blocking(UW unit, const UB *src, SZ len) {
 
     // オーバーランフラグはセットしたままにしない
     clr_w(SPI_ICR(unit), SPI_ICR_RORIC);
-
-    return (SZ)len;
 }
 
 // srcからSPIに16ビットデータをlen個書き出す。SPIから受信したデータは破棄する
 //   pico-sdkのspi_write16_blocking()を書き換え
-static SZ spi_write16_blocking(UW unit, const UH *src, SZ len) {
+static void spi_write16_blocking(UW unit, const UH *src, SZ len) {
     for (INT i = 0; i < len; ++i) {
         while (!spi_is_writable(unit));
         out_w(SPI_DR(unit), (UW)src[i]);
@@ -165,8 +152,6 @@ static SZ spi_write16_blocking(UW unit, const UH *src, SZ len) {
 
     // オーバーランフラグはセットしたままにしない
     clr_w(SPI_ICR(unit), SPI_ICR_RORIC);
-
-    return (SZ)len;
 }
 
 // デバイスオープン関数
@@ -199,13 +184,14 @@ ER dev_spi_open(UW unit, UINT omode) {
 
 // デバイスライト関数
 ER dev_spi_write(UW unit, UW cmd, void *buf, SZ size, SZ *asize) {
-    SZ ret;
+    if (unit > 1) return E_PAR;
+
     if (cmd == 1) {
-        ret = spi_write_blocking(unit, (UB *)buf, size);
-        if (asize) *asize = ret;
+        spi_write_blocking(unit, (UB *)buf, size);
+        if (asize) *asize = size;
     } else {
-        ret = spi_write16_blocking(unit, (UH *)buf, size);
-        if (asize) *asize = ret;
+        spi_write16_blocking(unit, (UH *)buf, size);
+        if (asize) *asize = size;
     }
     return E_OK;
 }

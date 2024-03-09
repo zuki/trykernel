@@ -21,6 +21,7 @@
 #define SSD1331_HEIGHT      64
 #define SSD1331_WIDTH       96
 #define SSD1331_BUF_LEN     (SSD1331_HEIGHT * SSD1331_WIDTH)
+#define SSD1331_LBUF_LEN    (8 * SSD1331_WIDTH)
 
 #define RGB(r,g,b)	(UH)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3))
 

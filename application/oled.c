@@ -13,6 +13,13 @@ void task_oled(INT stacd, void *exinf);             // タスクの実行関数
 UW  tskstk_oled[1024/sizeof(UW)];                   // タスクのスタック領域
 ID  tskid_oled;                                     // タスクID
 
+static UH lpxs[SSD1331_LBUF_LEN];   // 1行表示用ピクセルバッファ: 12文字, 1文字8x8ピクセル
+static UB vbuf[12];                        // 1行表示文字列用
+static const UB TITLE[12] = " ENV DATA  ";
+static const UB PH[] = "P: ";              // 気圧用ヘッダー
+static const UB TH[] = "T: ";              // 気温用ヘッダー
+static const UB HH[] = "H: ";              // 湿度用ヘッダー
+
 /* タスク生成情報 */
 T_CTSK  ctsk_oled = {
     .tskatr     = TA_HLNG | TA_RNG3 | TA_USERBUF,   // タスク属性
@@ -63,7 +70,7 @@ static void gpio_init(UINT gpio) {
     out_w(GPIO_CTRL(gpio), GPIO_CTRL_FUNCSEL_SIO);  // 端子機能SIO
 }
 
-static ER init_oled(void) {
+static void init_oled(void) {
     gpio_put(SPI_CSN_PIN, 1);
 
     //  CS (Chip Select)ピン: アクティブLOWなので、HIGH状態で初期化
@@ -82,7 +89,7 @@ static ER init_oled(void) {
     gpio_put(SPI_RESN_PIN, 1);
 
     // ssd1331をリセット
-    //reset();
+    reset();
 
     // デフォルト値で初期化: Adafruit-SSD1331-OLED-Driver-Library-for-Arduinoから引用
     UB cmds[] = {
@@ -110,27 +117,14 @@ static ER init_oled(void) {
         SSD1331_SET_DISP_ON_NORM
     };
     send_cmd_list(cmds, count_of(cmds));
-    return E_OK;
 }
 
-static void write_pixel(INT x, INT y, UH color) {
-    if (x < 0 || x >= SSD1331_WIDTH || y < 0 || y >= SSD1331_HEIGHT)
-        return;
-
-    UB cmds[] = {
-        SSD1331_SET_COL_ADDR, x, x,
-        SSD1331_SET_ROW_ADDR, y, y
-    };
-
-    send_cmd_list(cmds, 6);
-    send_data(&color, 1);
-}
-
-static void write_char(INT x, INT y, UB ch, UH color) {
+static void set_char(INT x, INT y, UB ch, UH color) {
     if (x > SSD1331_WIDTH - 8 || y > SSD1331_HEIGHT - 8)
         return;
 
     UB b, c, p;
+    INT pos;
 
     ch = to_upper(ch);
     INT idx = get_font_index(ch);    // 文字のfont[]内の行数
@@ -140,27 +134,31 @@ static void write_char(INT x, INT y, UB ch, UH color) {
         for (INT k = 0; k < 8; k++) {
             b = (c & p);
             p >>= 1;
-            write_pixel(x + k, y + i, b ? color : COL_BLACK);
+            pos = (y + i) * SSD1331_WIDTH + x + k;
+            lpxs[pos] = (b ? color : COL_BLACK);
         }
     }
 }
 
 // y行のx桁から文字列strを書き込む
-static void write_string(INT x, INT y, const UB *str, UH color) {
+static void write_line(INT y, const UB *str, UH color) {
     // Cull out any string off the screen
-    if (x > SSD1331_WIDTH - 8 || y > SSD1331_HEIGHT - 8)
+    if (y > SSD1331_HEIGHT - 8)
         return;
 
+    memset(lpxs, 0, 2 * SSD1331_LBUF_LEN);
+
     for (INT i = 0; i < 12; i++) {
-        write_char(x, y, *(str+i), color);
-        x += 8;
+        set_char(i * 8, 0, *(str+i), color);
     }
-/*
-    while (*str) {
-        write_char(x, y, *str++, color);
-        x += 8;
-    }
-*/
+
+    UB cmds[] = {
+        SSD1331_SET_COL_ADDR, 0,  95,
+        SSD1331_SET_ROW_ADDR, y, y + 7
+    };
+
+    send_cmd_list(cmds, 6);
+    send_data(lpxs, SSD1331_LBUF_LEN);
 }
 
 /**
@@ -211,8 +209,8 @@ static void clear_screen(UH color) {
         SSD1331_SET_COL_ADDR, 0, SSD1331_WIDTH - 1,
         SSD1331_SET_ROW_ADDR, 0, SSD1331_HEIGHT -1
     };
-
     send_cmd_list(cmds, count_of(cmds));
+
     for (INT i = 0; i < SSD1331_WIDTH; i++) {
         for (INT j = 0; j < SSD1331_HEIGHT; j++) {
             send_data(&color, 1);
@@ -223,20 +221,14 @@ static void clear_screen(UH color) {
 /* タスクの実行関数*/
 void task_oled(INT stacd, void *exinf) {
     UINT flgptn;
-    ER err;
-
-    UB vbuf[12];                // 測定値用バッファ
-    const UB PH[] = "P: ";
-    const UB TH[] = "T: ";
-    const UB HH[] = "H: ";
 
     // SSD1331の初期化
-    err = init_oled();
+    init_oled();
     // 画面の消去
-    clear_screen(COL_BLACK);
+    clear_screen(COL_BACK);
 
     // タイトルを表示
-    write_string(18, 0, "ENV_DATA", COL_PURPLE);
+    write_line(0, TITLE, COL_FRONT);
 
     while(1) {
         // 環境センサーのデータ表示
@@ -244,20 +236,13 @@ void task_oled(INT stacd, void *exinf) {
         if (flgptn & FLG_BME) {
             // 気圧を表示
             make_value(vbuf, PH, pres_data);
-            write_string(0, 10, vbuf, COL_RED);
-            //write_string(0, 10, vbuf, pres_data > 101000 ? COL_RED : COL_GREEN);
-            //tm_putstring(vbuf);tm_putstring("\n");
+            write_line(10, vbuf, COL_FRONT);
             // 温度を表示
             make_value(vbuf, TH, temp_data);
-            write_string(0, 20, vbuf, COL_GREEN);
-            //write_string(0, 20, vbuf, temp_data > 3000 ? COL_RED : COL_GREEN);
-            //tm_putstring(vbuf);tm_putstring("\n");
+            write_line(20, vbuf, COL_FRONT);
             // 湿度を表示
             make_value(vbuf, HH, humi_data);
-            write_string(0, 30, vbuf, COL_BLUE);
-            //write_string(0, 30, vbuf, humi_data < 40000 ? COL_RED : COL_GREEN);
-            //tm_putstring(vbuf);tm_putstring("\n");
+            write_line(30, vbuf, COL_FRONT);
         }
     }
-
 }
