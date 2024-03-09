@@ -65,10 +65,10 @@ static void spi_set_baudrate(UW unit, UW baudrate) {
 void spi_set_format(UW unit, UINT data_bits, spi_cpol_t cpol, spi_cpha_t cpha, spi_order_t corder) {
     // SPIを無効に
     clr_w(SPI_CR1(unit), SPI_CR1_SSE);
-    set_w(SPI_CR0(unit), ((UW)(data_bits - 1)) |
-                    ((UW)cpol) << 6 |
-                    ((UW)cpha) << 7);
-
+    clr_w(SPI_CR0(unit), 0x000000cf);
+    set_w(SPI_CR0(unit), (UW)(data_bits - 1) |
+                         ((UW)cpol) << 6 |
+                         ((UW)cpha) << 7 );
     // SPIを最有効化
     set_w(SPI_CR1(unit), SPI_CR1_SSE);
 }
